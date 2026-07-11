@@ -1,4 +1,5 @@
 import numpy as np
+from sources.data_storage import * 
 
 
 def apply_boundary(proposal, X_current, boundary_type, boundaries):
@@ -54,77 +55,37 @@ def apply_boundary(proposal, X_current, boundary_type, boundaries):
         raise ValueError(f"{boundary_type=} is unknown")
 
 
-def euler_maruyama(
-    X_current,
-    dt,
-    b,
-    sigma,
-    boundary_type,
-    boundaries,
-    xi=None,
-):
-    """
-    One Euler-Maruyama step.
-
-    b and sigma may be constants or functions of x.
-    """
+def euler_maruyama(X_current, dt, b, sigma, boundary_type, boundaries, xi=None):
+    
+    
     if xi is None:
         xi = np.random.normal(0, 1, size=X_current.shape)
 
-    drift = b(X_current) if callable(b) else b
-    diffusion = sigma(X_current) if callable(sigma) else sigma
+    # drift = b(X_current) if callable(b) else b
+    # diffusion = sigma(X_current) if callable(sigma) else sigma
 
-    proposal = X_current + drift * dt + diffusion * np.sqrt(dt) * xi
+    proposal = X_current + b(X_current,dt) * dt + sigma(X_current, dt) * np.sqrt(dt) * xi
 
-    return apply_boundary(
-        proposal=proposal,
-        X_current=X_current,
-        boundary_type=boundary_type,
-        boundaries=boundaries,
-    )
+    return apply_boundary(proposal=proposal, X_current=X_current, boundary_type=boundary_type,
+        boundaries=boundaries)
 
 
-def numerical_solution(
-    method,
-    X_0,
-    dt,
-    n_steps,
-    b,
-    sigma,
-    boundary_type,
-    boundaries,
-    save_every=None,
-):
-    """
-    Simulate n_steps using the supplied numerical method.
-
-    save_every:
-        None  -> only final state is saved
-        integer -> save a copy every save_every steps
-    """
+def numerical_solution(method, X_0, dt, n_steps, b, sigma, boundary_type, boundaries
+                       , save_sim=True):
+    
+    
     X_current = X_0.copy()
 
-    saved_steps = []
-    saved_X = []
-
     for i in range(n_steps):
-        X_current = method(
-            X_current=X_current,
-            dt=dt,
-            b=b,
-            sigma=sigma,
-            boundary_type=boundary_type,
-            boundaries=boundaries,
-        )
+        X_current = method(X_current=X_current, dt=dt, b=b, sigma=sigma
+                           , boundary_type=boundary_type, boundaries=boundaries)
 
-        step_number = i + 1
 
-        if save_every is not None and step_number % save_every == 0:
-            saved_steps.append(step_number)
-            saved_X.append(X_current.copy())
+    if save_sim:
+        
+        filename = make_filename(boundary_type[0:3],b=b(0,0), sigma=sigma(0,0), dt=dt
+                                 , n_parts=X_current.size)
+        save_solution(X_current, filename)
 
-    if not saved_steps or saved_steps[-1] != n_steps:
-        saved_steps.append(n_steps)
-        saved_X.append(X_current.copy())
 
-    return X_current, saved_steps, saved_X
+    return X_current
