@@ -1,18 +1,64 @@
 import numpy as np
 
+# def stationary_solution(x, b, sigma, boundary):
+
+#     bound_1, bound_2 = boundary
+
+#     if b(0,0) == 0:
+#         p = np.ones_like(x) / (bound_2 - bound_1)
+
+#     else:
+#         k = 2 * b(0,0) / sigma(0,0)**2
+#         const = (np.exp(k * bound_2) - np.exp(k * bound_1)) / k
+#         p = np.exp(k * x) / const
+
+#     return p
+
 def stationary_solution(x, b, sigma, boundary):
 
     bound_1, bound_2 = boundary
 
-    if b(0,0) == 0:
-        p = np.ones_like(x) / (bound_2 - bound_1)
+    x = np.asarray(x)
 
+    b_value = b(0)
+    sigma_1 = sigma(bound_1)
+    sigma_2 = sigma(bound_2)
+
+    # case sigma is constant
+    if sigma_1 == sigma_2:
+
+        if b_value == 0:
+            p = np.ones_like(x) / (bound_2 - bound_1)
+
+        else:
+            k = 2 * b_value / sigma_1**2
+            const = (np.exp(k * bound_2) - np.exp(k * bound_1)) / k
+            p = np.exp(k * x) / const
+
+    # sigma is linear
     else:
-        k = 2 * b(0,0) / sigma(0,0)**2
-        const = (np.exp(k * bound_2) - np.exp(k * bound_1)) / k
-        p = np.exp(k * x) / const
+
+        slope = (sigma_2 - sigma_1) / (bound_2 - bound_1)
+        intercept = sigma_1 - slope * bound_1
+
+        sigma_x = slope*x + intercept
+        sigma_1 = slope*bound_1 + intercept
+        sigma_2 = slope*bound_2 + intercept
+
+        if b_value == 0:
+            p = 1 / sigma_x**2
+            const = (1/slope) * (1/sigma_1 - 1/sigma_2)
+
+        else:
+            p = np.exp(-2*b_value/(slope*sigma_x)) / sigma_x**2
+            const = (np.exp(-2*b_value/(slope*sigma_2)) 
+                     - np.exp(-2*b_value/(slope*sigma_1))) / (2*b_value)
+
+        p = p / const
 
     return p
+
+
 
 def stationary_solution_2d(x, y, b, sigma, boundaries):
 
