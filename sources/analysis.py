@@ -115,8 +115,19 @@ def histogram_density(X, x_range, bins):
 
     return density, centres, counts, edges, bin_widths
 
-def global_density_error(p_num, p_true, bin_widths):
-    error_per_bin = p_num - p_true
-    global_error = np.sum(np.abs(error_per_bin) * bin_widths)
+def density_errors(p_num, p_true, bin_widths, selection=["local","L1", "L2", "relative"]):
 
-    return global_error, error_per_bin
+    local_error = p_num - p_true
+
+    L1_error = np.sum(np.abs(local_error) *bin_widths)
+
+    L2_error = np.sqrt(np.sum(local_error**2 *bin_widths))
+    relative_L2_error = L2_error / np.sqrt(np.sum(p_true**2 * bin_widths))
+
+    errors = {"local": local_error
+              , "L1": L1_error
+              , "L2": L2_error
+              , "relative": relative_L2_error}
+
+    return tuple(errors[name] for name in selection)
+
