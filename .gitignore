@@ -1,3 +1,23 @@
 
 # generated simulation data
 data/**/*.npy
+
+# generated simulation data
+*.npy
+data/**/*.npy
+noFlux1D_notebooks/data/**/*.npy
+noFlux2D_notebooks/data/**/*.npy
+
+# cache
+__pycache__/
+.ipynb_checkpoints/
+
+# generated simulation data
+*.npy
+data/**/*.npy
+noFlux1D_notebooks/data/**/*.npy
+noFlux2D_notebooks/data/**/*.npy
+
+# cache
+__pycache__/
+.ipynb_checkpoints/
