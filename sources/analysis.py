@@ -89,6 +89,29 @@ def stationary_solution_2d(x, y, b, sigma, boundaries):
 
     return p
 
+
+def stationary_solution_disk(x, y, b, sigma, radius=1.0):
+    Sigma = sigma @ sigma.T
+    k = 2*np.linalg.solve(Sigma, b)
+
+    grid_size = 500
+    x_grid = np.linspace(-radius, radius, grid_size)
+    y_grid = np.linspace(-radius, radius, grid_size)
+    x_mesh, y_mesh = np.meshgrid(x_grid, y_grid, indexing="ij")
+
+    p_grid = np.exp(k[0]*x_mesh + k[1]*y_mesh)
+    mask_grid = x_mesh**2 + y_mesh**2 <= radius**2
+
+    dx = x_grid[1] - x_grid[0]
+    dy = y_grid[1] - y_grid[0]
+    const = np.sum(p_grid[mask_grid])*dx*dy
+
+    p = np.exp(k[0]*x + k[1]*y)/const
+    mask = x**2 + y**2 <= radius**2
+    p[~mask] = np.nan
+
+    return p
+
 def stationary_solution_prime(x, b, sigma, boundary):
 
     bound_1, bound_2 = boundary
@@ -100,8 +123,6 @@ def stationary_solution_prime(x, b, sigma, boundary):
 
     return p
 
-
-import numpy as np
 
 
 def histogram_density(X, x_range, bins):
