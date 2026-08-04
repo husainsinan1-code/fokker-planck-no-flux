@@ -131,3 +131,77 @@ def density_errors(p_num, p_true, bin_widths, selection=["local","L1", "L2", "re
 
     return tuple(errors[name] for name in selection)
 
+
+
+def histogram_density_disk(X, radius=1.0, bins=50, density=True):
+    bounds = ((-radius, radius), (-radius, radius))
+    p, x_edges, y_edges = np.histogram2d(X[:, 0], X[:, 1], bins=bins, range=bounds, density=density)
+
+    x_centres = 0.5*(x_edges[:-1] + x_edges[1:])
+    y_centres = 0.5*(y_edges[:-1] + y_edges[1:])
+    x_mesh, y_mesh = np.meshgrid(x_centres, y_centres, indexing="ij")
+
+    p[x_mesh**2 + y_mesh**2 > radius**2] = np.nan
+
+    return p, x_edges, y_edges
+
+
+def density_disk_range(X, r_range, theta_range=(0, 2*np.pi), theta_bins=60, r_bins=20, density=True):
+    x = X[:, 0]
+    y = X[:, 1]
+
+    r = np.sqrt(x**2 + y**2)
+    theta = np.mod(np.arctan2(y, x), 2*np.pi)
+
+    r_min, r_max = r_range
+    theta_min, theta_max = theta_range
+
+    index = (r >= r_min) & (r <= r_max) & (theta >= theta_min) & (theta <= theta_max)
+
+    theta_edges = np.linspace(theta_min, theta_max, theta_bins + 1)
+    r_edges = np.linspace(r_min, r_max, r_bins + 1)
+
+    counts, theta_edges, r_edges = np.histogram2d(theta[index], r[index], bins=[theta_edges, r_edges])
+
+    if density:
+        dtheta = np.diff(theta_edges)
+        area = 0.5*(r_edges[1:]**2 - r_edges[:-1]**2)
+        bin_area = dtheta[:, None]*area[None, :]
+        p = counts/(len(X)*bin_area)
+    else:
+        p = counts
+
+    return p, theta_edges, r_edges, counts
+
+
+def get_colorbar_values_2d(densities):
+    vmin = min(np.nanmin(p) for p in densities)
+    vmax = max(np.nanmax(p) for p in densities)
+
+    return vmin, vmax
+
+
+def local_error_density(p_num, p_ref):
+    return p_num - p_ref
+
+
+def density_error_norms(p_error, theta_edges, r_edges):
+    dtheta = np.diff(theta_edges)
+    dr_area = 0.5*(r_edges[1:]**2 - r_edges[:-1]**2)
+    bin_area = dtheta[:, None]*dr_area[None, :]
+
+    L1_error = np.nansum(np.abs(p_error)*bin_area)
+    L2_error = np.sqrt(np.nansum(p_error**2*bin_area))
+
+    return L1_error, L2_error
+
+
+def density_error_norms_cartesian(p_error, x_edges, y_edges):
+    dx = np.diff(x_edges)
+    dy = np.diff(y_edges)
+    bin_area = dx[:, None]*dy[None, :]
+
+    L1_error = np.nansum(np.abs(p_error)*bin_area)
+    L2_error = np.sqrt(np.nansum(p_error**2*bin_area))
+
+    return L1_error, L2_error

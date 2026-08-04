@@ -117,3 +117,80 @@ def plot_local_density(X, x_range, bins=30, ax=None, title=None, x_label="x"
     ax.grid(True)
 
     return centres, density, edges
+
+def plot_density_mesh(p, x_edges, y_edges, ax=None, title=None, colorbar_values=None, cmap=None, x_label="x", y_label="y", equal_aspect=False):
+    if ax is None:
+        ax = plt.gca()
+
+    vmin, vmax = (None, None) if colorbar_values is None else colorbar_values
+
+    ax.pcolormesh(x_edges, y_edges, p.T, shading="auto", vmin=vmin, vmax=vmax, cmap=cmap)
+
+    if title is not None:
+        ax.set_title(title)
+
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+
+    if equal_aspect:
+        ax.set_aspect("equal")
+
+    ax.grid(False)
+
+    return ax
+
+
+def plot_histogram_disk(X, radius=1.0, bins=50, ax=None, title=None, density=True, colorbar_values=None, cmap=None):
+    if ax is None:
+        ax = plt.gca()
+
+    vmin, vmax = (None, None) if colorbar_values is None else colorbar_values
+
+    p, x_edges, y_edges = histogram_density_disk(X, radius=radius, bins=bins, density=density)
+
+    ax.pcolormesh(x_edges, y_edges, p.T, shading="auto", vmin=vmin, vmax=vmax, cmap=cmap)
+
+    theta = np.linspace(0, 2*np.pi, 300)
+    x_boundary, y_boundary = disk_boundary(radius=radius, theta=theta)
+    ax.plot(x_boundary, y_boundary)
+
+    if title is not None:
+        ax.set_title(title)
+
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_xlim(-radius, radius)
+    ax.set_ylim(-radius, radius)
+    ax.set_aspect("equal")
+    ax.grid(False)
+
+    return ax
+
+
+def plot_density_disk_range(X, r_range, theta_range=(0, 2*np.pi), theta_bins=60, r_bins=20, ax=None, title=None, density=True, colorbar_values=None, cmap=None):
+    if ax is None:
+        ax = plt.gca()
+
+    vmin, vmax = (None, None) if colorbar_values is None else colorbar_values
+
+    p, theta_edges, r_edges, counts = density_disk_range(
+        X,
+        r_range=r_range,
+        theta_range=theta_range,
+        theta_bins=theta_bins,
+        r_bins=r_bins,
+        density=density
+    )
+
+    ax.pcolormesh(theta_edges, r_edges, p.T, shading="auto", vmin=vmin, vmax=vmax, cmap=cmap)
+
+    if title is not None:
+        ax.set_title(title)
+
+    ax.set_xlabel(r"$\theta$")
+    ax.set_ylabel(r"$r$")
+    ax.set_xlim(theta_range)
+    ax.set_ylim(r_range)
+    ax.grid(False)
+
+    return ax
