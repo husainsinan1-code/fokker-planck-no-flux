@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from sources.analysis import histogram_density_disk, density_disk_range
+from sources.simulation import disk_boundary
 
 
 def plot_histogram(X, bins='fd', ax=None, title=None, x_label="x", y_label="density"
@@ -23,15 +25,54 @@ def plot_histogram(X, bins='fd', ax=None, title=None, x_label="x", y_label="dens
 
     return ax
 
-def plot_histogram_2d(X, bins=50, ax=None, title=None, x_label="x", y_label="y", density=True
-                      , limits=None, colorbar=True):
+
+
+def plot_density_2d(p, bounds, ax=None, title=None, colorbar_values=None, cmap=None):
+    if ax is None:
+        ax = plt.gca()
+
+    x_edges = np.linspace(bounds[0][0], bounds[0][1], p.shape[0])
+    y_edges = np.linspace(bounds[1][0], bounds[1][1], p.shape[1])
+
+    vmin, vmax = (None, None) if colorbar_values is None else colorbar_values
+
+    ax.pcolormesh(x_edges, y_edges, p.T, shading="auto", vmin=vmin, vmax=vmax, cmap=cmap)
+
+    if title is not None:
+        ax.set_title(title)
+
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_xlim(bounds[0])
+    ax.set_ylim(bounds[1])
+    ax.set_aspect("equal")
+    ax.grid(False)
+
+    return ax
+
+
+def plot_histogram_2d(X, bins=50, ax=None, title=None, x_label="x", y_label="y", density=True,
+                      limits=None, colorbar=True, colorbar_values=None, cmap=None):
     
     if ax is None:
         ax = plt.gca()
 
-    histo = ax.hist2d(X[:, 0], X[:, 1], bins=bins, density=density, range=limits)
+    vmin, vmax = (None, None) if colorbar_values is None else colorbar_values
 
-    if colorbar:
+    histo = ax.hist2d(
+        X[:, 0],
+        X[:, 1],
+        bins=bins,
+        density=density,
+        range=limits,
+        vmin=vmin,
+        vmax=vmax,
+        cmap=cmap
+    )
+
+    # Only make an internal colorbar when no shared colorbar scale is passed.
+    # Your notebook passes colorbar_values and then makes the shared colorbar itself.
+    if colorbar and colorbar_values is None:
         plt.colorbar(histo[3], ax=ax, label="density", fraction=0.05)
 
     if title is not None:
@@ -45,9 +86,10 @@ def plot_histogram_2d(X, bins=50, ax=None, title=None, x_label="x", y_label="y",
         ax.set_ylim(limits[1])
 
     ax.set_aspect("equal")
-    ax.grid(True)
+    ax.grid(False)
 
     return ax
+
 
 def plot_bars_2d(X, bins=50, ax=None, title=None, x_label="x", y_label="y", density=True,
                           limits=None, colorbar=True):

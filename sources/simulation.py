@@ -202,3 +202,35 @@ def get_boundary_normal_disk(X_current, proposal, radius):
     normal = reflection_point/radius
 
     return normal, reflection_point
+
+
+def get_boundary_normal(X_current, proposal, boundaries):
+    x_min, x_max = boundaries[0]
+    y_min, y_max = boundaries[1]
+
+    left = proposal[:, 0] < x_min
+    right = proposal[:, 0] > x_max
+    bottom = proposal[:, 1] < y_min
+    top = proposal[:, 1] > y_max
+
+    normal = np.zeros_like(proposal)
+    boundary_value = np.zeros(proposal.shape[0])
+    reflection_point = proposal.copy()
+
+    normal[left] = np.array([-1.0, 0.0])
+    boundary_value[left] = -x_min
+    reflection_point[left, 0] = x_min
+
+    normal[right] = np.array([1.0, 0.0])
+    boundary_value[right] = x_max
+    reflection_point[right, 0] = x_max
+
+    normal[bottom] = np.array([0.0, -1.0])
+    boundary_value[bottom] = -y_min
+    reflection_point[bottom, 1] = y_min
+
+    normal[top] = np.array([0.0, 1.0])
+    boundary_value[top] = y_max
+    reflection_point[top, 1] = y_max
+
+    return normal, boundary_value, reflection_point
