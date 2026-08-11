@@ -78,7 +78,9 @@ def apply_boundary_2d(proposal, X_current, boundary_type, boundaries, sigma):
         outside = ((proposal[:, 0] < x_min) | (proposal[:, 0] > x_max) |
                    (proposal[:, 1] < y_min) | (proposal[:, 1] > y_max))
 
-    if boundary_type == "reflection":
+    if boundary_type in ["reflection", "reflection_normal"]:
+
+        Sigma = sigma @ sigma.T
 
         while np.any(outside):
 
@@ -91,8 +93,12 @@ def apply_boundary_2d(proposal, X_current, boundary_type, boundaries, sigma):
                     radius
                 )
 
-                v = normal @ sigma.T
-                v = v/np.linalg.norm(v, axis=1)[:, None]
+                if boundary_type == "reflection":
+                    v = normal @ Sigma.T
+                    v = v/np.linalg.norm(v, axis=1)[:, None]
+
+                elif boundary_type == "reflection_normal":
+                    v = normal
 
                 oblique_distance = np.sum(proposal[outside]*normal, axis=1) - radius
                 oblique_distance = oblique_distance/np.sum(v*normal, axis=1)
@@ -103,34 +109,24 @@ def apply_boundary_2d(proposal, X_current, boundary_type, boundaries, sigma):
                 outside = np.sum(proposal*proposal, axis=1) > radius**2
 
             else:
-                left = proposal[:, 0] < x_min
-                right = proposal[:, 0] > x_max
-                bottom = proposal[:, 1] < y_min
-                top = proposal[:, 1] > y_max
+                normal, boundary_value, reflection_point = get_boundary_normal(
+                    start[outside],
+                    proposal[outside],
+                    boundaries
+                )
 
-                if np.any(left):
-                    n = np.array([-1.0, 0.0])
-                    v = sigma @ n
-                    v = v / np.linalg.norm(v)
-                    proposal[left, :] = proposal[left, :] - 2*((proposal[left, 0] - x_min)/v[0])[:, None]*v
+                if boundary_type == "reflection":
+                    v = normal @ Sigma.T
+                    v = v/np.linalg.norm(v, axis=1)[:, None]
 
-                if np.any(right):
-                    n = np.array([1.0, 0.0])
-                    v = sigma @ n
-                    v = v / np.linalg.norm(v)
-                    proposal[right, :] = proposal[right, :] - 2*((proposal[right, 0] - x_max)/v[0])[:, None]*v
+                elif boundary_type == "reflection_normal":
+                    v = normal
 
-                if np.any(bottom):
-                    n = np.array([0.0, -1.0])
-                    v = sigma @ n
-                    v = v / np.linalg.norm(v)
-                    proposal[bottom, :] = proposal[bottom, :] - 2*((proposal[bottom, 1] - y_min)/v[1])[:, None]*v
+                oblique_distance = np.sum(proposal[outside]*normal, axis=1) - boundary_value
+                oblique_distance = oblique_distance/np.sum(v*normal, axis=1)
 
-                if np.any(top):
-                    n = np.array([0.0, 1.0])
-                    v = sigma @ n
-                    v = v / np.linalg.norm(v)
-                    proposal[top, :] = proposal[top, :] - 2*((proposal[top, 1] - y_max)/v[1])[:, None]*v
+                proposal[outside] = proposal[outside] - 2*oblique_distance[:, None]*v
+                start[outside] = reflection_point
 
                 outside = ((proposal[:, 0] < x_min) | (proposal[:, 0] > x_max) |
                            (proposal[:, 1] < y_min) | (proposal[:, 1] > y_max))
@@ -145,7 +141,7 @@ def apply_boundary_2d(proposal, X_current, boundary_type, boundaries, sigma):
         raise ValueError(f"{boundary_type=} is unknown")
 
 
-
+    
 def euler_maruyama(X_current, dt, b, sigma, boundary_type, boundaries, xi=None):
     
     
@@ -203,34 +199,56 @@ def get_boundary_normal_disk(X_current, proposal, radius):
 
     return normal, reflection_point
 
-
 def get_boundary_normal(X_current, proposal, boundaries):
     x_min, x_max = boundaries[0]
     y_min, y_max = boundaries[1]
 
-    left = proposal[:, 0] < x_min
-    right = proposal[:, 0] > x_max
-    bottom = proposal[:, 1] < y_min
-    top = proposal[:, 1] > y_max
+    delta_X = proposal - X_current
 
+    alpha = np.full(proposal.shape[0], np.inf)
     normal = np.zeros_like(proposal)
     boundary_value = np.zeros(proposal.shape[0])
-    reflection_point = proposal.copy()
 
-    normal[left] = np.array([-1.0, 0.0])
-    boundary_value[left] = -x_min
-    reflection_point[left, 0] = x_min
+    # left boundary
+    index = delta_X[:, 0] < 0
+    alpha_left = np.full(proposal.shape[0], np.inf)
+    alpha_left[index] = (x_min - X_current[index, 0]) / delta_X[index, 0]
 
-    normal[right] = np.array([1.0, 0.0])
-    boundary_value[right] = x_max
-    reflection_point[right, 0] = x_max
+    valid = index & (alpha_left > 0) & (alpha_left <= 1) & (alpha_left < alpha)
+    alpha[valid] = alpha_left[valid]
+    normal[valid] = np.array([-1.0, 0.0])
+    boundary_value[valid] = -x_min
 
-    normal[bottom] = np.array([0.0, -1.0])
-    boundary_value[bottom] = -y_min
-    reflection_point[bottom, 1] = y_min
+    # right boundary
+    index = delta_X[:, 0] > 0
+    alpha_right = np.full(proposal.shape[0], np.inf)
+    alpha_right[index] = (x_max - X_current[index, 0]) / delta_X[index, 0]
 
-    normal[top] = np.array([0.0, 1.0])
-    boundary_value[top] = y_max
-    reflection_point[top, 1] = y_max
+    valid = index & (alpha_right > 0) & (alpha_right <= 1) & (alpha_right < alpha)
+    alpha[valid] = alpha_right[valid]
+    normal[valid] = np.array([1.0, 0.0])
+    boundary_value[valid] = x_max
+
+    # bottom boundary
+    index = delta_X[:, 1] < 0
+    alpha_bottom = np.full(proposal.shape[0], np.inf)
+    alpha_bottom[index] = (y_min - X_current[index, 1]) / delta_X[index, 1]
+
+    valid = index & (alpha_bottom > 0) & (alpha_bottom <= 1) & (alpha_bottom < alpha)
+    alpha[valid] = alpha_bottom[valid]
+    normal[valid] = np.array([0.0, -1.0])
+    boundary_value[valid] = -y_min
+
+    # top boundary
+    index = delta_X[:, 1] > 0
+    alpha_top = np.full(proposal.shape[0], np.inf)
+    alpha_top[index] = (y_max - X_current[index, 1]) / delta_X[index, 1]
+
+    valid = index & (alpha_top > 0) & (alpha_top <= 1) & (alpha_top < alpha)
+    alpha[valid] = alpha_top[valid]
+    normal[valid] = np.array([0.0, 1.0])
+    boundary_value[valid] = y_max
+
+    reflection_point = X_current + alpha[:, None]*delta_X
 
     return normal, boundary_value, reflection_point
