@@ -94,7 +94,7 @@ def get_reflection_direction(normal, sigma, boundary_type):
         v = normal @ Sigma.T
         v = v/np.linalg.norm(v, axis=1)[:, None]
 
-    elif boundary_type == "reflection_normal":
+    elif boundary_type == "reflect_norm":
         v = normal
 
     else:
@@ -182,7 +182,7 @@ def apply_boundary_2d(proposal, X_current, boundary_type, boundaries, sigma):
 
     outside = is_outside_2d(proposal, boundaries)
 
-    if boundary_type in ["reflection", "reflection_normal"]:
+    if boundary_type in ["reflection", "reflect_norm"]:
 
         start = X_current.copy()
 
