@@ -21,3 +21,6 @@ noFlux2D_notebooks/data/**/*.npy
 # cache
 __pycache__/
 .ipynb_checkpoints/
+
+noFlux1D_notebooks/data/
+noFlux2D_notebooks/data/
