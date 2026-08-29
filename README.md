@@ -12,26 +12,17 @@ with Fokker–Planck equation
 
 $$
 \frac{\partial p}{\partial t}
-=
--\nabla\cdot(bp)
-+
-\frac{1}{2}\nabla\cdot\nabla\cdot(\Sigma p),
-\qquad
-\Sigma=\sigma\sigma^\mathsf{T}.
+=-\nabla\cdot(bp)+ \frac{1}{2}\nabla\cdot\nabla\cdot(\Sigma p),
+\qquad \Sigma=\sigma\sigma^\mathsf{T}.
 $$
 
 Particle motion is approximated using Euler–Maruyama with
 
 $$
 X_{n+1}
-=
-X_n
-+
-\varepsilon^2 b(X_n)
-+
-\varepsilon \sigma(X_n)\xi_n,
-\qquad
-\varepsilon=\sqrt{\Delta t}.
+=X_n + \varepsilon^2 b(X_n)
++\varepsilon \sigma(X_n)\xi_n,
+\qquad \varepsilon=\sqrt{\Delta t}.
 $$
 
 The main boundary treatments implemented are **reflection** and **rejection**, used to approximate no-flux behaviour at the boundary.
