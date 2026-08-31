@@ -80,12 +80,12 @@ The data-generation notebooks are intended to be modified for the required probl
 
 The main parameters normally varied are:
 
-* drift \(b\);
-* diffusion coefficient or matrix \(\sigma\);
+* drift $b$;
+* diffusion coefficient or matrix $\sigma$;
 * boundary treatment;
-* time-step size \(\Delta t=\varepsilon^2\).
+* time-step size $\Delta t=\varepsilon^2$.
 
-The simulations used during development generally used approximately **10 million particles** and final simulation time \(T=2\). These values are not requirements and can be changed as needed.
+The simulations used during development generally used approximately 10 million particles and final simulation time $T=2$. These values are not requirements and can be changed as needed.
 
 Users may also wish to define their own data-storage and naming conventions for new experiments.
 
@@ -113,7 +113,7 @@ pip install -r requirements.txt
 
 ## Code note
 
-Some of the plotting formatting and adjustment code, as well as parts of the organisational structure of the Python source files, were produced or reorganised with substantial assistance from generative AI.
+Some of the plotting, formatting, and adjustment code was produced or enhanced with assistance from generative AI. The organisational structure of the Python source files was reorganised with  assistance from generative AI.
 
 ## Acknowledgement
 
@@ -121,4 +121,4 @@ Developed as part of dissertation work for the **MSc Computational Applied Mathe
 
 ## License
 
-This project is released under the **MIT License**. The code may be used, modified and redistributed with appropriate attribution.
+This project is licensed under the MIT License. See the `LICENSE` file for details.
